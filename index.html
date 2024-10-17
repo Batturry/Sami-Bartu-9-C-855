@@ -86,26 +86,41 @@
             font-size: 15px;
             color: #555;
         }
-        .delete-btn {
-            background-color: #dc3545;
-            color: white;
+        .menu {
+            position: relative;
+        }
+        .menu-button {
+            background: none;
             border: none;
-            padding: 8px 12px;
-            font-size: 14px;
-            border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
-            opacity: 0;
+            font-size: 20px;
+            color: #555;
+        }
+        .menu-options {
+            display: none;
             position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
+            right: 0;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 10;
         }
-        li:hover .delete-btn {
-            opacity: 1;
+        .menu-options button {
+            background-color: transparent;
+            color: #007BFF;
+            border: none;
+            padding: 10px;
+            text-align: left;
+            width: 100%;
+            cursor: pointer;
         }
-        .delete-btn:hover {
-            background-color: #c82333;
+        .menu-options button:hover {
+            background-color: #f0f4f8;
+        }
+        .menu-button:focus + .menu-options,
+        .menu-options:hover {
+            display: block;
         }
     </style>
 </head>
@@ -118,43 +133,71 @@
     </div>
 
     <script>
-        // Yerel depolamadan notları yükle
         const notlar = JSON.parse(localStorage.getItem('notlar')) || [];
+        let duzenlenecekIndex = null; // Düzenlenmekte olan notun indeksi
 
         function notlariGoster() {
             const notListesi = document.getElementById('notList');
             notListesi.innerHTML = '';
 
-            // Notları ters sırayla ekle (yeni notlar üstte)
             for (let i = notlar.length - 1; i >= 0; i--) {
                 const li = document.createElement('li');
                 const notMetin = document.createElement('span');
                 notMetin.classList.add('not-metin');
                 notMetin.textContent = notlar[i];
 
+                const menu = document.createElement('div');
+                menu.classList.add('menu');
+
+                const menuButton = document.createElement('button');
+                menuButton.textContent = '⋮'; // Üç nokta simgesi
+                menuButton.classList.add('menu-button');
+
+                const menuOptions = document.createElement('div');
+                menuOptions.classList.add('menu-options');
+
+                const duzenleBtn = document.createElement('button');
+                duzenleBtn.textContent = 'Düzenle';
+                duzenleBtn.onclick = function () {
+                    notDuzenle(i);
+                };
+
                 const silBtn = document.createElement('button');
                 silBtn.textContent = 'Sil';
-                silBtn.classList.add('delete-btn');
                 silBtn.onclick = function () {
                     notSil(i);
                 };
 
+                menuOptions.appendChild(duzenleBtn);
+                menuOptions.appendChild(silBtn);
+                menu.appendChild(menuButton);
+                menu.appendChild(menuOptions);
                 li.appendChild(notMetin);
-                li.appendChild(silBtn);
+                li.appendChild(menu);
                 notListesi.appendChild(li);
             }
         }
 
         function ekle() {
             const yeniNot = document.getElementById('notInput').value;
-            if (yeniNot.trim() !== '') {
-                notlar.push(yeniNot);
-                localStorage.setItem('notlar', JSON.stringify(notlar));
+            if (duzenlenecekIndex !== null) { // Düzenleme işlemi
+                notlar[duzenlenecekIndex] = yeniNot;
+                duzenlenecekIndex = null; // Düzenleme tamamlandı
                 document.getElementById('notInput').value = '';
-                notlariGoster();
+            } else if (yeniNot.trim() !== '') { // Yeni not ekleme
+                notlar.push(yeniNot);
+                document.getElementById('notInput').value = '';
             } else {
                 alert('Lütfen bir not girin.');
             }
+
+            localStorage.setItem('notlar', JSON.stringify(notlar));
+            notlariGoster();
+        }
+
+        function notDuzenle(index) {
+            document.getElementById('notInput').value = notlar[index]; // Seçilen notu metin kutusuna yükle
+            duzenlenecekIndex = index; // Düzenlenmekte olan notun indeksini sakla
         }
 
         function notSil(index) {
